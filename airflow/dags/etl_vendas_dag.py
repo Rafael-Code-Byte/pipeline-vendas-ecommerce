@@ -1,5 +1,6 @@
 import csv
 from datetime import datetime
+from airflow.providers.databricks.operators.databricks import DatabricksRunNowOperator
 
 from airflow import DAG
 from airflow.operators.python import PythonOperator
@@ -53,4 +54,11 @@ with DAG(
         python_callable=carregar,
     )
 
-    extrair_dados >> carregar_dados
+    disparar_databricks = DatabricksRunNowOperator(
+        task_id="disparar_databricks",
+        databricks_conn_id="databricks_default",
+        job_id="615053155279694",
+    )	
+
+
+    extrair_dados >> carregar_dados >> disparar_databricks
