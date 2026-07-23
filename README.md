@@ -10,6 +10,7 @@ flowchart LR
     ETL --> PG[(PostgreSQL\nvendas_diarias)]
     AF["Apache Airflow\n(Docker)"] -->|orquestra e agenda| ETL
     AF -->|Connections + XCom| PG
+    AF -->|DatabricksRunNowOperator| DBX["Databricks Job\n(notebook Spark/Delta Lake)"]
     CSVGrande[("CSV grande\n(500k+ linhas)")] --> Spark["PySpark\nDataFrames + Spark SQL"]
     Spark --> Parquet[("Parquet\n(armazenamento colunar)")]
 ```
@@ -21,6 +22,7 @@ flowchart LR
 - **Apache Airflow** (via Docker Compose) — orquestração, agendamento e monitoramento do ETL
 - **Docker / Docker Compose** — containerização do ambiente de orquestração
 - **Apache Spark (PySpark)** — processamento distribuído de grandes volumes, DataFrames e Spark SQL
+- **Databricks (Free Edition)** — execução de notebook Spark/Delta Lake em nuvem, disparado remotamente pelo Airflow
 - **Git/GitHub** — versionamento
 - **pytest** — testes automatizados
 
@@ -31,6 +33,7 @@ flowchart LR
 3. **Load**: insere os dados tratados em uma tabela PostgreSQL (`vendas_diarias`), de forma idempotente (a tabela é truncada antes de cada carga, então rodar o pipeline várias vezes não duplica dados).
 4. **Orquestração**: todo esse fluxo roda como uma DAG no Apache Airflow, com autenticação segura via Airflow Connections (nenhuma senha exposta em código) e passagem de dados entre tasks via XCom.
 5. **Big Data**: um segundo pipeline, em PySpark, demonstra o mesmo tipo de análise (receita por categoria) rodando sobre um dataset de 500 mil registros, comparando também a eficiência do formato Parquet frente ao CSV.
+6. **Orquestração cross-plataforma**: a mesma DAG do Airflow, após carregar os dados no PostgreSQL, dispara remotamente (via API, usando `DatabricksRunNowOperator`) um job no Databricks que roda um notebook Spark com Delta Lake — demonstrando orquestração de um pipeline que atravessa infraestrutura local e nuvem.
 
 ## Estrutura do projeto
 
@@ -74,7 +77,7 @@ python3 pipeline_etl.py
 cd airflow
 docker compose up -d
 ```
-Acesse `http://localhost:8080` (usuário/senha: `airflow`), cadastre a Connection `postgres_ecommerce` apontando para o seu PostgreSQL, e ative a DAG `etl_vendas_dag`.
+Acesse `http://localhost:8080` (usuário/senha: `airflow`), cadastre a Connection `postgres_ecommerce` apontando para o seu PostgreSQL, cadastre também a Connection `databricks_default` (host do workspace + Personal Access Token) se quiser usar a task que dispara o Databricks, e ative a DAG `etl_vendas_dag`.
 
 ### 5. Processamento com Spark
 ```bash
@@ -89,7 +92,7 @@ pytest
 
 ## Principais aprendizados
 
-Este projeto foi construído como parte de uma trilha de estudo prática, evoluindo em complexidade a cada etapa: começando com um script Python simples, passando por modelagem relacional em SQL, ETL com tratamento de erros e testes automatizados, orquestração de pipelines com Airflow (incluindo boas práticas como Connections seguras e idempotência), até processamento distribuído de grandes volumes com Spark.
+Este projeto foi construído como parte de uma trilha de estudo prática, evoluindo em complexidade a cada etapa: começando com um script Python simples, passando por modelagem relacional em SQL, ETL com tratamento de erros e testes automatizados, orquestração de pipelines com Airflow (incluindo boas práticas como Connections seguras e idempotência), processamento distribuído de grandes volumes com Spark, e integração com Databricks para orquestrar workloads que combinam infraestrutura local e nuvem a partir de uma única DAG.
 
 ## Autor
 
