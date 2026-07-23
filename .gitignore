@@ -14,3 +14,6 @@ derby.log
 terraform/.terraform/
 terraform/*.tfstate*
 terraform/.terraform.lock.hcl
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/.terraform.lock.hcl
