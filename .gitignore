@@ -11,3 +11,6 @@ data/vendas_grande_parquet/
 data/receita_por_categoria_parquet/
 spark-warehouse/
 derby.log
+terraform/.terraform/
+terraform/*.tfstate*
+terraform/.terraform.lock.hcl
